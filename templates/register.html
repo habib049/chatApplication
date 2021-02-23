@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% load crispy_forms_filters %}
+{% block main-content %}
+    <div class="container app">
+        <div class="heading">
+            <h3>Sign up</h3>
+            <p>It is quick and easy</p>
+        </div>
+        <div class="d-flex justify-content-center">
+            <form method="post" id="registration-form">
+                {% csrf_token %}
+                {{ form|crispy }}
+                <input type="submit" name="Register" class="btn btn-primary" id="submit-button">
+            </form>
+        </div>
+    </div>
+{% endblock %}

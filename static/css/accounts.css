@@ -1,0 +1,30 @@
+.app {
+  margin: 0;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  -ms-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+}
+.heading{
+  width: 300px;
+  margin: auto;
+}
+.heading p{
+  margin-top: -0.5rem;
+}
+#registration-form .form-control, #login-form .form-control{
+  margin: 0.5rem 0 1rem;
+  width: 300px;
+}
+#submit-button{
+  width: 300px;
+  margin-top: 0.5rem;
+}
+.registration-link{
+  width: 300px;
+  margin: 1rem auto;
+}
+.registration-link a{
+  text-decoration: none;
+}
