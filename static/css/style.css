@@ -7,9 +7,9 @@
     --pink-red: #C1093F;
     --white: #edefff;
     --light-white: #c7cadb;
-
+    --sender-color: #e57500;
+    --receiver-color: #00598a;
 }
-
 
 .body, html {
     overflow: hidden;
@@ -149,9 +149,11 @@ p {
     display: flex;
 }
 
-.user-profile-image .username {
+.user-profile-image .username,.status {
     margin-left: 0.5rem;
-    margin-top: 0.2rem;
+}
+.status{
+    color:var(--sender-color);
 }
 
 .initial-screen {
@@ -211,9 +213,9 @@ p {
 }
 
 .received-message-content p {
-    background: #ebebeb none repeat scroll 0 0;
+    background: var(--receiver-color) none repeat scroll 0 0;
     border-radius: 3px;
-    color: #646464;
+    color: var(--white);
     font-size: 14px;
     margin: 0;
     padding: 5px 10px 5px 12px;
@@ -225,27 +227,28 @@ p {
     display: block;
     font-size: 12px;
     margin: 8px 0 0;
+    float: right;
 }
 
 .received-message-content {
     width: 50%;
 }
 
-
 .sent-message-content p {
-    background: #05728f none repeat scroll 0 0;
+    background: var(--sender-color) none repeat scroll 0 0;
     border-radius: 3px;
     font-size: 14px;
     margin: 0;
-    color: #fff;
+    color: var(--white);
     padding: 5px 10px 5px 12px;
     width: 100%;
 }
 
-.outgoing-message {
+.outgoing-message, .incoming-message {
     overflow: hidden;
-    margin: 26px 0 26px;
+    margin: 5px 0 5px;
 }
+
 
 .sent-message-content {
     float: right;
@@ -278,3 +281,77 @@ p {
     color: var(--light-white);
     margin-top: 10px;
 }
+
+.deleted-message {
+    background-color: var(--dark-blue);
+}
+
+#replySectionWrapper {
+    display: none;
+}
+
+.reply-message-section {
+    margin-top: 10px;
+    margin-bottom: -3px;
+    margin-left: 1.4rem;
+    width: 94%;
+    border-radius: 5px;
+    padding: 0.2rem 0.5rem 0.6rem;
+    background-color: var(--dark-blue);
+    display: flex;
+    justify-content: space-between;
+}
+
+.close-icon-section {
+    color: var(--light-white);
+}
+
+.close-icon-section i:hover {
+    cursor: pointer;
+    opacity: 0.8;
+}
+
+.sender-reply-message {
+    border: 2px solid var(--sender-color);
+    border-left: 8px solid var(--sender-color);
+}
+
+.receiver-reply-message {
+    border: 2px solid var(--receiver-color);
+    border-left: 8px solid var(--receiver-color);
+}
+
+#replyMessageContent {
+    color: var(--light-white);
+    margin-top: 0.4rem;
+    font-weight: 400;
+    width: 500px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.message-options {
+    float: right;
+    display: none;
+    transition: 1.5s;
+}
+
+.message-reply {
+    margin-right: 0.5rem;
+}
+
+.message-content:hover {
+    cursor: pointer;
+}
+
+.message-content:hover .message-options {
+    display: block;
+    transition: 1.5s;
+}
+
+.deleted-message-content {
+    background-color: var(--dark-blue);
+}
+
+

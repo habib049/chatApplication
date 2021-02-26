@@ -6,7 +6,8 @@
             <div class="left-section">
                 <div class="menubar">
                     <div class="user-profile-image">
-                        <img src="\media\profile_images\default_profile.jpg" alt="user-profile">
+                        <img src="\media\profile_images\default_profile.jpg" alt="user-profile"
+                             class="user-image" id="{{ user.username }}">
                     </div>
                     <div class="other-option">
                         <i class="fas fa-ellipsis-v"></i>
@@ -21,33 +22,41 @@
                     </div>
                 </div>
                 <div class="contact-section">
-
                     {% for contact in contacts %}
-                        <div class="contact" id="conversion-{{ contact.friend.username }}">
-                            <div class="user-profile-image">
-                                <img src="\media\profile_images\default_profile.jpg" alt="user-profile">
+                        {% if user.username == contact.friend.username %}
+                            <div class="contact" id="conversion-{{ contact.user.username }}">
+                        {% else %}
+                            <div class="contact" id="conversion-{{ contact.friend.username }}">
+                        {% endif %}
+                    <div class="user-profile-image">
+                        <img src="\media\profile_images\default_profile.jpg" alt="user-profile">
+                    </div>
+                    <div class="right-information">
+                        <div class="upper-information">
+                            <div class="username">
+                                {% if user.username == contact.friend.username %}
+                                    <p class="contact-username">{{ contact.user.username }}</p>
+                                {% else %}
+                                    <p class="contact-username">{{ contact.friend.username }}</p>
+                                {% endif %}
+
                             </div>
-                            <div class="right-information">
-                                <div class="upper-information">
-                                    <div class="username">
-                                        <p>{{ contact.friend.username }}</p>
-                                    </div>
 
-                                    <div class="last-message-time">
-                                        {% if contact.messages.first.timestamp.date == now.date %}
-                                            <p>{{ contact.messages.first.timestamp|time }}</p>
-                                        {% else %}
-                                            <p>{{ contact.messages.first.timestamp|date }}</p>
-                                        {% endif %}
+                            <div class="last-message-time">
+                                {% if contact.messages.first.timestamp.date == now.date %}
+                                    <p>{{ contact.messages.first.timestamp|time }}</p>
+                                {% else %}
+                                    <p>{{ contact.messages.first.timestamp|date }}</p>
+                                {% endif %}
 
-                                    </div>
-                                </div>
-
-                                <div class="last-message">
-                                    <p>{{ contact.messages.first.content }}</p>
-                                </div>
                             </div>
                         </div>
+
+                        <div class="last-message">
+                            <p>{{ contact.messages.first.content }}</p>
+                        </div>
+                    </div>
+                    </div>
                     {% endfor %}
 
                     <div class="contact">
@@ -297,75 +306,67 @@
                             </div>
                         </div>
                     </div>
-                </div>
-
-            </div>
-            <div class="right-section">
-                <div class="info-bar-section">
-
-                </div>
-                <div class="chatting-section">
-                    <div class="initial-screen">
-                        <i class="far fa-comments"></i>
                     </div>
-                    <div class="chatting-wrapper">
-                        <div class="menubar chat-menubar">
-                            <div class="user-profile-image">
-                                <div class="user-image">
-                                    <img src="\media\profile_images\default_profile.jpg" alt="user-profile">
+
+                </div>
+                <div class="right-section">
+                    <div class="info-bar-section">
+
+                    </div>
+                    <div class="chatting-section">
+                        <div class="initial-screen">
+                            <i class="far fa-comments"></i>
+                        </div>
+                        <div class="chatting-wrapper">
+                            <div class="menubar chat-menubar">
+                                <div class="user-profile-image">
+                                    <div class="user-image">
+                                        <img src="\media\profile_images\default_profile.jpg" alt="user-profile">
+
+                                    </div>
+                                    <div class="username-status-wrapper">
+                                        <div class="username">
+                                            <p id="chatMenuBarUsername">Username</p>
+                                        </div>
+                                        <div class="status">
+                                            <p id="user-status"></p>
+                                        </div>
+                                    </div>
 
                                 </div>
-                                <div class="username">
-                                    <p id="chatMenuBarUsername">Username</p>
+                                <div class="other-option">
+                                    <i class="fas fa-ellipsis-v"></i>
                                 </div>
+                            </div>
+                            <div class="chatting-area-wrapper">
+                                <div class="chatting-area" id="chattingArea">
 
-                            </div>
-                            <div class="other-option">
-                                <i class="fas fa-ellipsis-v"></i>
-                            </div>
-                        </div>
-                        <div class="chatting-area-wrapper">
-                            <div class="chatting-area" id="chattingArea">
-                                {#                                <div class="incoming-message">#}
-                                {#                                    <div class="received-message">#}
-                                {#                                        <div class="received-message-content">#}
-                                {#                                            <p>Test which is a new approach to have all#}
-                                {#                                                solutions</p>#}
-                                {#                                            <span class="time-date"> 11:01 AM    |    June 9</span>#}
-                                {#                                        </div>#}
-                                {#                                    </div>#}
-                                {#                                </div>#}
-                                {#                                <div class="outgoing-message">#}
-                                {#                                    <div class="sent-message-content">#}
-                                {#                                        <p>Test which is a new approach to have all#}
-                                {#                                            solutions</p>#}
-                                {#                                        <span class="time-date"> 11:01 AM    |    June 9</span>#}
-                                {#                                    </div>#}
-                                {#                                </div>#}
-                                {#                                <div class="incoming-message">#}
-                                {#                                    <div class="received-message">#}
-                                {#                                        <div class="received-message-content">#}
-                                {#                                            <p>Test, which is a new approach to have</p>#}
-                                {#                                            <span class="time-date"> 11:01 AM    |    Yesterday</span>#}
-                                {#                                        </div>#}
-                                {#                                    </div>#}
-                                {#                                </div>#}
-                            </div>
-                        </div>
-                        <div class="chatting-bar">
-                            <form id="messageInputForm">
-                                <div class="input-group mb-2 message-input-wrapper">
-                                    <input type="text" class="form-control" id="messageInput"
-                                           placeholder="Type your message" name="message">
                                 </div>
-                            </form>
+                            </div>
+                            <div class="chatting-bar">
+                                <form id="messageInputForm">
+                                    <div class="reply-section-wrapper" id="replySectionWrapper">
+                                        <div class="reply-message-section" id="replyMessageSection">
+                                            <div class="reply-section">
+                                                <p id="replyMessageContent">fine nad what about you</p>
+                                            </div>
+                                            <div class="close-icon-section">
+                                                <i class="fas fa-times" id="closeReplyButton"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="input-group mb-2 message-input-wrapper">
+                                        <input type="text" class="form-control" id="messageInput"
+                                               placeholder="Type your message" name="message">
+                                    </div>
+                                </form>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-
-    <script src="{% static 'js/script.js' %}"></script>
+        <script src="{% static 'js/reconnecting-websocket.js' %}"></script>
+        <script src="{% static 'js/script.js' %}"></script>
 {% endblock %}

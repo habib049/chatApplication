@@ -1,5 +1,6 @@
 from django.db.models import Q, Prefetch
-from django.core import serializers
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
 from django.http import JsonResponse
 from django.shortcuts import render, HttpResponseRedirect, redirect
 from django.contrib import messages, auth
@@ -7,6 +8,8 @@ from django.urls import reverse_lazy
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from .forms import RegistrationForm, LoginForm
 from django.views.generic import CreateView, FormView, RedirectView, ListView
+from django.contrib.auth.mixins import LoginRequiredMixin
+
 from django.contrib.auth.models import User
 from .models import Message, Room
 from datetime import datetime
@@ -54,7 +57,7 @@ def render_messenger(request):
     return redirect('/login')
 
 
-class Contact(ListView):
+class Contact(ListView, LoginRequiredMixin):
     model = Message
     paginate_by = 10
     context_object_name = 'contacts'
@@ -62,7 +65,7 @@ class Contact(ListView):
 
     def get_queryset(self):
         query = Room.objects.filter(
-            user=self.request.user
+            Q(user=self.request.user) | Q(friend=self.request.user)
         ).order_by(
             'timestamp'
         ).prefetch_related(
@@ -71,11 +74,6 @@ class Contact(ListView):
             ))
         )
         return query
-
-    def get_context_data(self, *args, **kwargs):
-        context = super(Contact, self).get_context_data(*args, **kwargs)
-        context['now'] = datetime.today()
-        return context
 
 
 def fetch_messages(request):
@@ -92,7 +90,7 @@ def fetch_messages(request):
         )
 
         page = request.POST.get('page', 1)
-        paginator = Paginator(fetched_messages, 10)
+        paginator = Paginator(fetched_messages, 20)
 
         try:
             fetched_messages = paginator.page(page)
@@ -107,5 +105,9 @@ def fetch_messages(request):
         }
         # serializing data
         serialized_messages = MessageSerializer(fetched_messages, many=True)
-        print(serialized_messages.data)
-        return JsonResponse({'messages': serialized_messages.data, 'page_data': data, 'user': request.user.username})
+        return JsonResponse({
+            'messages': serialized_messages.data,
+            'page_data': data,
+            'user': request.user.username,
+            'friend': request.POST.get('friend_name'),
+        })

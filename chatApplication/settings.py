@@ -50,6 +50,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'chatApplication.middleware.LoginRequiredMiddleware',
 ]
 
 ROOT_URLCONF = 'chatApplication.urls'
@@ -70,6 +71,15 @@ TEMPLATES = [
         },
     },
 ]
+
+LOGIN_REDIRECT_URL = '/'
+
+LOGIN_URL = '/login'
+
+LOGIN_EXEMPT_URLS = (
+    r'admin/',
+    r'^registration$',
+)
 
 WSGI_APPLICATION = 'chatApplication.wsgi.application'
 ASGI_APPLICATION = "chatApplication.asgi.application"

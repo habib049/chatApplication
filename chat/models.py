@@ -40,4 +40,5 @@ class Message(models.Model):
         on_delete=models.DO_NOTHING,
     )
     content = models.TextField()
-    timestamp = models.DateTimeField(auto_now=True)
+    deleted = models.BooleanField(default=False)
+    timestamp = models.DateTimeField(auto_now_add=True)
