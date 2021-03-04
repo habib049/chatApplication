@@ -1,12 +1,15 @@
 import json
-from datetime import datetime
-
-from channels.generic.websocket import WebsocketConsumer
+import redis
 from asgiref.sync import async_to_sync
+from channels.generic.websocket import WebsocketConsumer
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.db.models import Q
 
 from .models import Room, Message
+
+redis_instance = redis.StrictRedis(host=settings.REDIS_HOST,
+                                   port=settings.REDIS_PORT, db=0)
 
 
 class ChatConsumer(WebsocketConsumer):
@@ -16,31 +19,6 @@ class ChatConsumer(WebsocketConsumer):
         self.friend_name = None
         self.user = None
         self.room = None
-
-    def message_to_json(self, message):
-        return {
-            'sender': message.sender.username,
-            'receiver': message.receiver.username,
-            'content': message.content,
-            'timestamp': str(message.timestamp)
-        }
-
-    # def get_messages(self, data):
-    #     sender = User.objects.get(username=data['sender'])
-    #     receiver = User.objects.get(username=data['receiver'])
-    #     # getting messages
-    #     messages = Message.objects.filter(
-    #         Q(sender=sender, receiver=receiver) |
-    #         Q(sender=receiver, receiver=sender)
-    #     ).order_by(
-    #         'timestamp'
-    #     )[:10]
-    #
-    #     content = {
-    #         'command': 'messages',
-    #         'messages': self.message_to_json(messages)
-    #     }
-    #     self.send(text_data=json.dumps(content))
 
     def connect(self):
         self.user = self.scope['user']
@@ -63,17 +41,25 @@ class ChatConsumer(WebsocketConsumer):
             self.room_group_name,
             self.channel_name
         )
+        # storing data on redis
+
+        print("redis user exists : ", redis_instance.exists('active_chat_users'))
+
+        redis_instance.lpush('active_chat_users', self.user.username)
         self.accept()
+        while redis_instance.llen('active_chat_users') != 0:
+            print(redis_instance.lpop('active_chat_users'))
 
     def disconnect(self, close_code):
         async_to_sync(self.channel_layer.group_discard)(
             self.room_group_name,
             self.channel_name
         )
+        # removing the user from the active users on disconnect
+        redis_instance.lrem('active_chat_users', count=0, value=self.user.username)
 
     def receive(self, text_data):
         data = json.loads(text_data)
-        print(data)
         if data['command'] == 'newMessage':
             self.save_message(data)
         elif data['command'] == 'deleteMessage':
@@ -159,3 +145,71 @@ class ChatConsumer(WebsocketConsumer):
 
     def send_message(self, event):
         self.send(text_data=json.dumps(event['messages']))
+
+
+class NotificationConsumer(WebsocketConsumer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.room_group_name = None
+        self.user = None
+
+    def connect(self):
+        self.user = self.scope["user"].username
+        self.room_group_name = self.user
+        async_to_sync(self.channel_layer.group_add)(
+            self.room_group_name,
+            self.channel_name
+        )
+
+        redis_instance.lpush('active_users', self.user)
+
+        self.accept()
+
+    def receive(self, text_data):
+        data = json.loads(text_data)
+        if data['command'] == 'typing':
+            self.user_typing(data['user'], data['friend'], data['message'])
+        else:
+            self.stop_typing(data['user'], data['friend'], data['message'])
+
+    def user_typing(self, user, friend, message):
+        data = {
+            'message_type': 'typing',
+            'user': user,
+            'friend': friend,
+            'message': message
+        }
+
+        async_to_sync(self.channel_layer.group_send)(
+            friend,
+            {
+                'type': 'notify',
+                'notification': data
+            }
+        )
+
+    def stop_typing(self, user, friend, message):
+        data = {
+            'message_type': 'stop_typing',
+            'user': user,
+            'friend': friend,
+            'message': message
+        }
+
+        async_to_sync(self.channel_layer.group_send)(
+            friend,
+            {
+                'type': 'notify',
+                'notification': data
+            }
+        )
+
+    def disconnect(self, code):
+        async_to_sync(self.channel_layer.group_discard(
+            self.room_group_name,
+            self.channel_name
+        ))
+
+    def notify(self, event):
+        print(event)
+        self.send(text_data=json.dumps(event['notification']))

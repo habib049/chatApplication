@@ -100,6 +100,10 @@ p {
     transition: 0.1s;
 }
 
+.typing-information {
+    color: orange;
+}
+
 .user-profile-image {
     width: 15%;
 }
@@ -149,11 +153,12 @@ p {
     display: flex;
 }
 
-.user-profile-image .username,.status {
+.user-profile-image .username, .status {
     margin-left: 0.5rem;
 }
-.status{
-    color:var(--sender-color);
+
+.status {
+    color: var(--sender-color);
 }
 
 .initial-screen {

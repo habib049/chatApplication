@@ -1,6 +1,7 @@
 window.addEventListener('load', (event) => {
 
     let chattingArea = document.getElementById('chattingArea');
+    let userLastMessage = "";
 
     let user = document.getElementsByClassName('user-image')[0].id;
     let friend = "";
@@ -8,16 +9,42 @@ window.addEventListener('load', (event) => {
     // getting first user and make connection on it
     let firstFriend = document.getElementsByClassName('contact-username')[0].innerHTML;
 
+
+    // this socket is for notifications like someone else message you
+    // or someone is online or not
+
+    let notificationSocket = new ReconnectingWebSocket(
+        'ws://' + window.location.host +
+        '/ws/notification/'
+    );
+
+    notificationSocket.onopen = (e) => {
+        console.log("notification socket open")
+    }
+    notificationSocket.onmessage = (e) => {
+        let data = JSON.parse(e.data);
+        if (data.message_type === "typing") {
+            //calling the message
+            userTyping(data.message, data.friend, data.user);
+        } else if (data.message_type === "stop_typing") {
+            stopTyping(data.message, data.friend, data.user);
+        }
+    }
+    notificationSocket.onclose = (e) => {
+        console.log("notification socket close")
+    }
+
+
     //making websocket connection
     let chatSocket = new ReconnectingWebSocket(
         'ws://' + window.location.host +
         '/ws/chat/' + firstFriend + '/'
     );
 
-    chatSocket.onopen = function (e) {
+    chatSocket.onopen = (e) => {
         console.log('connection open');
     };
-    chatSocket.onmessage = function (e) {
+    chatSocket.onmessage = (e) => {
         let data = JSON.parse(e.data)
 
         if (data.message_type) {
@@ -25,15 +52,17 @@ window.addEventListener('load', (event) => {
                 deleteMessage(data.message_id, data.message);
             else if (data.message_type === 'typing') {
                 if (data.user !== user)
-                    userTyping(data.message)
+                    userTyping(data.message, data.friend)
             } else if (data.message_type === 'stop_typing') {
                 if (data.user !== user)
-                    stopTyping(data.message);
+                    stopTyping(data.message, data.friend);
             }
-        } else
+        } else {
             loadNewMessage(data.content, data.timestamp, data.sender, data.receiver);
+        }
+
     };
-    chatSocket.onclose = function (e) {
+    chatSocket.onclose = (e) => {
         console.log('connection close');
     };
 
@@ -75,19 +104,18 @@ window.addEventListener('load', (event) => {
                     document.getElementsByClassName('initial-screen')[0].style.display = 'none';
                     document.getElementsByClassName('chatting-wrapper')[0].style.display = 'block';
                     //loading Messages
-                    loadMessages(data.messages, data.user);
+                    loadMessages(data.messages, data.user, friendName);
                     changeUrl(friendName);
                     friend = friendName;
                     addListenersToDeleteAndReplyButtons();
                 }
             });
         }
-
     }
 
-    function loadMessages(messages, user) {
+    function loadMessages(messages, user, friendName) {
         //labeling menu bar
-        document.getElementById('chatMenuBarUsername').innerText = messages[0].receiver;
+        document.getElementById('chatMenuBarUsername').innerText = friendName;
 
         chattingArea.innerHTML = "";//clear the previous content
 
@@ -247,32 +275,31 @@ window.addEventListener('load', (event) => {
         return cookieValue;
     }
 
-    let timer,
-        timeoutVal = 1000;
+    let timer, timeoutVal = 1000;
 
     let messageInput = document.getElementById('messageInput');
 
     // typing event
     messageInput.addEventListener('keypress', (e) => {
         window.clearTimeout(timer);
-        chatSocket.send(
+        notificationSocket.send(
             JSON.stringify({
                 'command': 'typing',
                 'user': user,
+                'friend': friend,
                 'message': 'typing'
             })
         )
-
     })
 
     messageInput.addEventListener('keyup', (e) => {
-
         window.clearTimeout(timer); // prevent errant multiple timeouts from being generated
         timer = window.setTimeout(() => {
-            chatSocket.send(
+            notificationSocket.send(
                 JSON.stringify({
                     'command': 'stop_typing',
                     'user': user,
+                    'friend': friend,
                     'message': ''
                 })
             );
@@ -281,13 +308,35 @@ window.addEventListener('load', (event) => {
     })
 
     //user typing
-    function userTyping(message) {
-        document.getElementById('user-status').innerText = message;
+    function userTyping(message, messageFriend, messageUser) {
+        if (friend === messageUser) { // display in live user label
+            document.getElementById('user-status').innerText = message;
+        } else { // display in contacts that someone is typing
+            //getting the user contact element
+            let userContactId = "information-" + messageUser;
+
+            let userContact = document.getElementById(userContactId)
+            userContact.classList.add('typing-information')
+
+            //saving the user last message
+            if (userContact.innerText !== "typing..") {
+                userLastMessage = userContact.innerText;
+            }
+            userContact.innerText = "typing.."
+        }
     }
 
     //stop typing
-    function stopTyping(message) {
-        document.getElementById('user-status').innerText = message;
+    function stopTyping(message, messageFriend, messageUser) {
+        if (friend === messageUser) { // display in live user label
+            document.getElementById('user-status').innerText = message;
+        } else { // display in contacts that someone is typing
+            //getting the user contact element
+            let userContactId = "information-" + messageUser;
+            let userContact = document.getElementById(userContactId)
+            userContact.classList.remove('typing-information')
+            userContact.innerText = userLastMessage;
+        }
     }
 
 
@@ -321,7 +370,7 @@ window.addEventListener('load', (event) => {
                                             </div>`
 
             chattingArea.append(outgoingMessageDiv);
-        } else {
+        } else if (friend === receiver) {
             let incomingMessageDiv = document.createElement('div');
             incomingMessageDiv.classList.add('incoming-message');
 
@@ -332,8 +381,6 @@ window.addEventListener('load', (event) => {
                                                 </div>
                                             </div>`
             chattingArea.append(incomingMessageDiv);
-
-
         }
         if (chattingArea.scrollHeight > chattingArea.clientHeight) {
             chattingArea.scrollTop = chattingArea.scrollHeight;

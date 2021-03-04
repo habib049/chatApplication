@@ -39,7 +39,6 @@
                                 {% else %}
                                     <p class="contact-username">{{ contact.friend.username }}</p>
                                 {% endif %}
-
                             </div>
 
                             <div class="last-message-time">
@@ -48,12 +47,17 @@
                                 {% else %}
                                     <p>{{ contact.messages.first.timestamp|date }}</p>
                                 {% endif %}
-
                             </div>
                         </div>
 
                         <div class="last-message">
-                            <p>{{ contact.messages.first.content }}</p>
+                            {% if user.username == contact.friend.username %}
+                                <p id="information-{{ contact.user.username }}"
+                                >{{ contact.messages.first.content }}</p>
+                            {% else %}
+                                <p id="information-{{ contact.friend.username }}"
+                                >{{ contact.messages.first.content }}</p>
+                            {% endif %}
                         </div>
                     </div>
                     </div>
@@ -317,7 +321,7 @@
                         <div class="initial-screen">
                             <i class="far fa-comments"></i>
                         </div>
-                        <div class="chatting-wrapper">
+                        <div class="chatting-wrapper ">
                             <div class="menubar chat-menubar">
                                 <div class="user-profile-image">
                                     <div class="user-image">
@@ -339,7 +343,7 @@
                                 </div>
                             </div>
                             <div class="chatting-area-wrapper">
-                                <div class="chatting-area" id="chattingArea">
+                                <div class="chatting-area infinite-container" id="chattingArea">
 
                                 </div>
                             </div>
@@ -369,4 +373,7 @@
 
         <script src="{% static 'js/reconnecting-websocket.js' %}"></script>
         <script src="{% static 'js/script.js' %}"></script>
+
+        {#        <script src="{% static 'js/infinite.min.js' %}"></script>#}
+        {#        <script src="{% static 'js/waypoints.js' %}"></script>#}
 {% endblock %}
