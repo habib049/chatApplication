@@ -1,6 +1,4 @@
 from django.db.models import Q, Prefetch
-from django.contrib.auth.decorators import login_required
-from django.utils.decorators import method_decorator
 from django.http import JsonResponse
 from django.shortcuts import render, HttpResponseRedirect, redirect
 from django.contrib import messages, auth
@@ -8,12 +6,11 @@ from django.urls import reverse_lazy
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from .forms import RegistrationForm, LoginForm
 from django.views.generic import CreateView, FormView, RedirectView, ListView
-from django.contrib.auth.mixins import LoginRequiredMixin
-
 from django.contrib.auth.models import User
 from .models import Message, Room
-from datetime import datetime
 from .serializers import MessageSerializer
+
+
 
 
 class RegistrationView(CreateView):
@@ -57,11 +54,14 @@ def render_messenger(request):
     return redirect('/login')
 
 
-class Contact(ListView, LoginRequiredMixin):
+class Contact(ListView):
     model = Message
     paginate_by = 10
     context_object_name = 'contacts'
     template_name = 'index.html'
+
+
+
 
     def get_queryset(self):
         query = Room.objects.filter(

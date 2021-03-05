@@ -1,15 +1,12 @@
 import json
-import redis
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
-from django.conf import settings
 from django.contrib.auth.models import User
 from django.db.models import Q
-
 from .models import Room, Message
 
-redis_instance = redis.StrictRedis(host=settings.REDIS_HOST,
-                                   port=settings.REDIS_PORT, db=0)
+
+
 
 
 class ChatConsumer(WebsocketConsumer):
@@ -21,6 +18,11 @@ class ChatConsumer(WebsocketConsumer):
         self.room = None
 
     def connect(self):
+
+        redis_instance.lpush('active_chat_users', "user 1")
+        redis_instance.lpush('active_chat_users', "user 2")
+        redis_instance.lpush('active_chat_users', "user 3")
+
         self.user = self.scope['user']
         self.friend_name = self.scope['url_route']['kwargs']['friendname']
         # getting receiver object
@@ -42,11 +44,11 @@ class ChatConsumer(WebsocketConsumer):
             self.channel_name
         )
         # storing data on redis
-
-        print("redis user exists : ", redis_instance.exists('active_chat_users'))
-
-        redis_instance.lpush('active_chat_users', self.user.username)
+        # print("redis user exists : ", redis_instance.exists('active_chat_users'))
+        #
+        # redis_instance.lpush('active_chat_users', self.user.username)
         self.accept()
+
         while redis_instance.llen('active_chat_users') != 0:
             print(redis_instance.lpop('active_chat_users'))
 
