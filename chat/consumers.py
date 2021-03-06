@@ -140,7 +140,10 @@ class ChatConsumer(WebsocketConsumer):
 
         # checking if receiver is attached with the socket or not
         if cache.__contains__(message.receiver.username):  # if attached
-            if cache.get(message.receiver.username) is not 'active_chat_user':
+
+            print("\n\n", cache.get(message.receiver.username), "\n\n")
+
+            if cache.get(message.receiver.username) != 'active_chat_user':
                 async_to_sync(self.channel_layer.group_send)(
                     message.receiver.username,
                     {

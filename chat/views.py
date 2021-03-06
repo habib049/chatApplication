@@ -84,7 +84,7 @@ def fetch_messages(request):
             'timestamp'
         )
 
-        paginator = Paginator(fetched_messages, 20)
+        paginator = Paginator(fetched_messages, 10)
         # for getting last page
         last_page = paginator.num_pages
 
@@ -94,13 +94,12 @@ def fetch_messages(request):
         try:
             fetched_messages = paginator.page(page)
         except PageNotAnInteger:
-            fetched_messages = paginator.page(1)
+            fetched_messages = paginator.page(last_page)
         except EmptyPage:
             fetched_messages = paginator.page(paginator.num_pages)
 
         data = {
-            'previous_page': fetched_messages.has_previous() and fetched_messages.previous_page_number() or None,
-            'next_page': fetched_messages.has_next() and fetched_messages.next_page_number() or None,
+            'last_page': last_page
         }
 
         # serializing data
@@ -111,3 +110,5 @@ def fetch_messages(request):
             'user': request.user.username,
             'friend': request.POST.get('friend_name'),
         })
+
+

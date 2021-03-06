@@ -2,6 +2,7 @@ window.addEventListener('load', (event) => {
 
     let chattingArea = document.getElementById('chattingArea');
     let userLastMessage = "";
+    let total_pages = "";
 
     let user = document.getElementsByClassName('user-image')[0].id;
     let friend = "";
@@ -41,9 +42,9 @@ window.addEventListener('load', (event) => {
         console.log("notification socket close")
     }
     //
-    setTimeout(() => {
-        notifyNewMessage('this is new message for checking', 'raheel', "")
-    }, 2000)
+    // setTimeout(() => {
+    //     notifyNewMessage('this is new message for checking', 'raheel', "")
+    // }, 2000)
 
     function notifyNewMessage(message, sender, timestamp) {
         let contactId = "conversion-" + sender;
@@ -137,12 +138,17 @@ window.addEventListener('load', (event) => {
                 },
                 type: 'POST',
                 data: {
-                    'friend_name': friendName
+                    'friend_name': friendName,
                 },
 
                 url: '/fectch-messages',
                 dataType: 'json',
                 success: function (data) {
+
+                    // this is for pagination
+                    total_pages = data.page_data.last_page;
+
+
                     //changing color of contact
                     // if there is nay new message it removes the styling of new message
                     let contact = document.getElementById('conversion-' + friendName);
@@ -151,9 +157,14 @@ window.addEventListener('load', (event) => {
                         contact.classList.remove('new-message-contact');
                     }
 
-
                     //loading Messages
                     loadMessages(data.messages, data.user, friendName);
+                    console.log(data.messages.length)
+
+                    if (data.messages.length < 10) {
+                        total_pages -= 1;
+                        getMoreChat(friendName, total_pages)
+                    }
 
                     if (friendName !== firstFriend) //first friend is already connected
                         changeUrl(friendName);
@@ -362,7 +373,6 @@ window.addEventListener('load', (event) => {
 
     function loadNewMessage(message, timestamp, sender, receiver) {
         if (user === sender) {
-            alert("this is user message")
             let outgoingMessageDiv = document.createElement('div');
             outgoingMessageDiv.classList.add('outgoing-message');
 
@@ -373,7 +383,6 @@ window.addEventListener('load', (event) => {
 
             chattingArea.append(outgoingMessageDiv);
         } else if (user === receiver) {
-            alert("this is friend message")
             let incomingMessageDiv = document.createElement('div');
             incomingMessageDiv.classList.add('incoming-message');
 
@@ -400,4 +409,100 @@ window.addEventListener('load', (event) => {
             + ":" + date.getMinutes();
         return messageDate;
     }
+
+
+    //load more messages in infinite manner
+    chattingArea.addEventListener('scroll', (e) => {
+        let position = chattingArea.scrollTop;
+        if (position === 0) {
+            total_pages -= 1;
+            if (total_pages > 0) {
+                getMoreChat(friend, total_pages)
+            }
+        }
+    })
+
+    function getMoreChat(friendName, pageNumber) {
+        $.ajax({
+            beforeSend: function (xhr, settings) {
+                if (!(/^http:.*/.test(settings.url) || /^https:.*/.test(settings.url))) {
+                    xhr.setRequestHeader("X-CSRFToken", getCookie('csrftoken'));
+                }
+            },
+            type: 'POST',
+            data: {
+                'friend_name': friendName,
+                'page': pageNumber,
+            },
+
+            url: '/fectch-messages',
+            dataType: 'json',
+            success: function (data) {
+                console.log(data);
+                prependMoreMessages(data.messages, data.user);
+                addListenersToDeleteButtons();
+            }
+        });
+        return false; //to prevent the any kind of loading
+    }
+
+    function prependMoreMessages(messages, user) {
+        for (let i = messages.length-1; i >= 0; i--) {
+            let messageDiv = document.createElement('div');
+            let date = new Date(messages[i].timestamp);
+            let messageDate = getMessageDateTime(date);
+
+            if (user.toString() === messages[i].sender) { //sender message
+                messageDiv.classList.add('outgoing-message');
+                messageDiv.id = "message" + messages[i].id;
+                if (messages[i].deleted) {
+                    messageDiv.innerHTML = `<div class="sent-message-content message-content">
+                                                <p id="message-content-${messages[i].id}" class="sent-content" style="background-color:#49495a;">
+                                                    ${messages[i].content}
+                                                </p>
+                                                <span class="time-date"></span>
+                                         </div>`
+
+                } else {
+                    messageDiv.innerHTML = `<div class="sent-message-content message-content">
+                                                <p id="message-content-${messages[i].id}" class="sent-content">
+                                                    ${messages[i].content}
+                                                    <span class="message-options">                                                      
+                                                        <i id="delete-message-${messages[i].id}" class="fas fa-trash-alt delete-message"></i>
+                                                    </span> 
+                                                    </p>
+                                                <span class="time-date">${messageDate}</span>
+                                         </div>`
+                }
+
+
+            } else {//receiver message
+                messageDiv.classList.add('incoming-message');
+                if (messages[i].deleted) {
+                    messageDiv.innerHTML = `<div class="received-message">
+                                              <div class="received-message-content message-content ">
+                                                <p id="message-content-${messages[i].id}" class="received-content" style="background-color:#49495a;">
+                                                    ${messages[i].content}                                                   
+                                                </p>
+                                                <span class="time-date"></span>                                                
+                                              </div>`
+                } else {
+                    messageDiv.innerHTML = `<div class="received-message">
+                                              <div class="received-message-content message-content">
+                                                <p id="message-content-${messages[i].id}" class="received-content">
+                                                    ${messages[i].content}
+                                                                                                    
+                                                </p>
+                                                <span class="time-date">${messageDate}</span>                                                
+                                              </div>`
+                }
+
+            }
+
+            // attaching message to amin div
+            chattingArea.prepend(messageDiv);
+            chattingArea.scrollTop += 1;
+        }
+    }
+
 });
