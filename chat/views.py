@@ -112,3 +112,8 @@ def fetch_messages(request):
         })
 
 
+def autocomplete(request):
+    if 'term' in request.GET:
+        message_query = Message.objects.filter(content__icontains=request.GET.get('term'))
+        serialized_messages = MessageSerializer(message_query, many=True)
+        return JsonResponse(list(serialized_messages.data), safe=False)

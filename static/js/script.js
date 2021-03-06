@@ -410,6 +410,13 @@ window.addEventListener('load', (event) => {
         return messageDate;
     }
 
+    function getSearchMessageDateTime(timestamp) {
+        let date = new Date(timestamp);
+        return date.getDate() + "-"
+            + date.toLocaleDateString('en-us', {month: 'short'}) + "-"
+            + date.getFullYear();
+    }
+
 
     //load more messages in infinite manner
     chattingArea.addEventListener('scroll', (e) => {
@@ -447,7 +454,7 @@ window.addEventListener('load', (event) => {
     }
 
     function prependMoreMessages(messages, user) {
-        for (let i = messages.length-1; i >= 0; i--) {
+        for (let i = messages.length - 1; i >= 0; i--) {
             let messageDiv = document.createElement('div');
             let date = new Date(messages[i].timestamp);
             let messageDate = getMessageDateTime(date);
@@ -498,11 +505,47 @@ window.addEventListener('load', (event) => {
                 }
 
             }
-
             // attaching message to amin div
             chattingArea.prepend(messageDiv);
             chattingArea.scrollTop += 1;
         }
     }
+
+    // searching functionality
+    $(function () {
+        $("#searchInput").autocomplete({
+            source: '/search',
+            minLength: 1,
+            messages: {
+                noResults: '',
+                results: function () {
+                }
+            }
+        }).data("ui-autocomplete")._renderItem = function (ul, item) {
+
+            let content = String(item.content).replace(
+                new RegExp(this.term, "gi"),
+                "<span class='ui-state-highlight'>$&</span>");
+
+            return $("<li></li>")
+                .data("item.autocomplete", item)
+                .append(
+                    `<a  id="search-message-" ${item.id}>
+                        <div class="search-message-information">
+                            <div class="search-message-username" >
+                                ${item.sender} 
+                            </div>
+                            <div class="search-message-time">
+                                   ${getSearchMessageDateTime(item.timestamp)}
+                            </div>
+                        </div>
+                        
+                                           
+                        <p class="search-message-content">${content}</p>
+                    </a>`
+                ).appendTo(ul);
+        };
+    })
+
 
 });

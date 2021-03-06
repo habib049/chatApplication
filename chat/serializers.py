@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from .models import Message
 
 
 class MessageSerializer(serializers.Serializer):
@@ -8,3 +9,4 @@ class MessageSerializer(serializers.Serializer):
     content = serializers.CharField()
     timestamp = serializers.DateTimeField()
     deleted = serializers.BooleanField()
+

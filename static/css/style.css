@@ -53,23 +53,23 @@ p {
     border-bottom: 1px solid var(--light-white);
 }
 
-#searchProfilesInput {
+#searchInput {
     border: none;
     border-radius: 20px;
     background-color: var(--blue-hover);
     color: var(--light-white);
 }
 
-#searchProfilesInput::placeholder, #messageInput::placeholder {
+#searchInput::placeholder, #messageInput::placeholder {
     color: var(--light-white);
     opacity: 1;
 }
 
-#searchProfilesInput:-ms-input-placeholder, #messageInput:-ms-input-placeholder {
+#searchInput:-ms-input-placeholder, #messageInput:-ms-input-placeholder {
     color: var(--light-white);
 }
 
-#searchProfilesInput::-ms-input-placeholder, #messageInput::-ms-input-placeholder {
+#searchInput::-ms-input-placeholder, #messageInput::-ms-input-placeholder {
     color: var(--light-white);
 }
 
@@ -100,10 +100,12 @@ p {
     background-color: var(--blue-hover);
     transition: 0.1s;
 }
-.new-message-contact{
+
+.new-message-contact {
     background-color: #1d1d1d;
 }
-.new-message-contact .last-message-time-p, .new-message-contact .last-message{
+
+.new-message-contact .last-message-time-p, .new-message-contact .last-message {
     color: orange;
 }
 
@@ -358,3 +360,88 @@ p {
 }
 
 
+/*styling ui of autocomplete*/
+.ui-autocomplete {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    max-height: 500px;
+    overflow-y: auto;
+    z-index: 10000;
+    float: left;
+    display: none;
+    min-width: 160px;
+    padding: 4px 0;
+    margin: 0 0 10px 25px;
+    list-style: none;
+    background-color: var(--blue-hover);
+    border-radius: 5px;
+    -webkit-box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+    -moz-box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+    -webkit-background-clip: padding-box;
+    -moz-background-clip: padding;
+    background-clip: padding-box;
+    *border-right-width: 2px;
+    *border-bottom-width: 2px;
+}
+
+.ui-menu-item > a.ui-corner-all {
+    display: block;
+    padding: 10px 15px;
+    border-bottom: 1px solid var(--dark-blue);
+    clear: both;
+    font-weight: normal;
+    line-height: 18px;
+    color: var(--white);
+    white-space: nowrap;
+    text-decoration: none;
+}
+
+.ui-menu-item > a.ui-corner-all:hover {
+    cursor: pointer;
+    background-color: var(--dark-blue);
+}
+
+.ui-state-hover, .ui-state-active {
+    color: #ffffff;
+    text-decoration: none;
+    background-color: #0088cc;
+    border-radius: 0;
+    -webkit-border-radius: 0;
+    -moz-border-radius: 0;
+    background-image: none;
+}
+
+.search-message-information{
+    display: flex;
+    justify-content: space-between;
+}
+.search-message-username {
+    font-weight: 500;
+    text-transform: capitalize;
+}
+.search-message-content{
+    font-weight: 300;
+    text-transform: none;
+    color: var(--light-white);
+    margin-top: 3px;
+}
+.search-message-time{
+    font-size: 12px;
+}
+
+
+.ui-autocomplete::-webkit-scrollbar {
+    width: 6px;
+    background-color: var(--black);
+}
+
+.ui-autocomplete::-webkit-scrollbar-thumb {
+    background-color: var(--light-white);
+}
+
+.ui-state-highlight{
+    color: orange;
+    font-weight: 400;
+}
