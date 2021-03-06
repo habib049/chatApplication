@@ -11,8 +11,6 @@ from .models import Message, Room
 from .serializers import MessageSerializer
 
 
-
-
 class RegistrationView(CreateView):
     model = User
     form_class = RegistrationForm
@@ -60,9 +58,6 @@ class Contact(ListView):
     context_object_name = 'contacts'
     template_name = 'index.html'
 
-
-
-
     def get_queryset(self):
         query = Room.objects.filter(
             Q(user=self.request.user) | Q(friend=self.request.user)
@@ -89,8 +84,12 @@ def fetch_messages(request):
             'timestamp'
         )
 
-        page = request.POST.get('page', 1)
         paginator = Paginator(fetched_messages, 20)
+        # for getting last page
+        last_page = paginator.num_pages
+
+        # if page is not specified we fetch last page
+        page = request.POST.get('page', last_page)
 
         try:
             fetched_messages = paginator.page(page)
@@ -103,6 +102,7 @@ def fetch_messages(request):
             'previous_page': fetched_messages.has_previous() and fetched_messages.previous_page_number() or None,
             'next_page': fetched_messages.has_next() and fetched_messages.next_page_number() or None,
         }
+
         # serializing data
         serialized_messages = MessageSerializer(fetched_messages, many=True)
         return JsonResponse({

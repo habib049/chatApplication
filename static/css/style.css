@@ -94,11 +94,19 @@ p {
     transition: 0.1s;
 }
 
+
 .contact:hover {
     cursor: pointer;
     background-color: var(--blue-hover);
     transition: 0.1s;
 }
+.new-message-contact{
+    background-color: #1d1d1d;
+}
+.new-message-contact .last-message-time-p, .new-message-contact .last-message{
+    color: orange;
+}
+
 
 .typing-information {
     color: orange;
@@ -137,6 +145,13 @@ p {
     color: var(--light-white);
 }
 
+.last-message p {
+    width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 /*styling right main chatting section  */
 
 .right-section {
@@ -161,22 +176,21 @@ p {
     color: var(--sender-color);
 }
 
-.initial-screen {
-    /*display: none;*/
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
+/*.initial-screen {*/
+/*    !*display: none;*!*/
+/*    width: 100%;*/
+/*    height: 100%;*/
+/*    display: flex;*/
+/*    justify-content: center;*/
+/*    align-items: center;*/
+/*}*/
 
-.initial-screen i {
-    font-size: 250px;
-    color: var(--black-blue);
-}
+/*.initial-screen i {*/
+/*    font-size: 250px;*/
+/*    color: var(--black-blue);*/
+/*}*/
 
 .chatting-wrapper {
-    display: none;
     width: 100%;
     height: 100%;
     position: relative;
@@ -289,22 +303,6 @@ p {
 
 .deleted-message {
     background-color: var(--dark-blue);
-}
-
-#replySectionWrapper {
-    display: none;
-}
-
-.reply-message-section {
-    margin-top: 10px;
-    margin-bottom: -3px;
-    margin-left: 1.4rem;
-    width: 94%;
-    border-radius: 5px;
-    padding: 0.2rem 0.5rem 0.6rem;
-    background-color: var(--dark-blue);
-    display: flex;
-    justify-content: space-between;
 }
 
 .close-icon-section {

@@ -43,9 +43,9 @@
 
                             <div class="last-message-time">
                                 {% if contact.messages.first.timestamp.date == now.date %}
-                                    <p>{{ contact.messages.first.timestamp|time }}</p>
+                                    <p class="last-message-time-p">{{ contact.messages.first.timestamp|time }}</p>
                                 {% else %}
-                                    <p>{{ contact.messages.first.timestamp|date }}</p>
+                                    <p class="last-message-time-p">{{ contact.messages.first.timestamp|date }}</p>
                                 {% endif %}
                             </div>
                         </div>
@@ -78,7 +78,7 @@
                             </div>
 
                             <div class="last-message">
-                                <p>This is last message</p>
+                                <p>This is last message jdsfds fbfoisd f dsoif dsfudspfj d</p>
                             </div>
                         </div>
                     </div>
@@ -318,9 +318,6 @@
 
                     </div>
                     <div class="chatting-section">
-                        <div class="initial-screen">
-                            <i class="far fa-comments"></i>
-                        </div>
                         <div class="chatting-wrapper ">
                             <div class="menubar chat-menubar">
                                 <div class="user-profile-image">
@@ -349,16 +346,7 @@
                             </div>
                             <div class="chatting-bar">
                                 <form id="messageInputForm">
-                                    <div class="reply-section-wrapper" id="replySectionWrapper">
-                                        <div class="reply-message-section" id="replyMessageSection">
-                                            <div class="reply-section">
-                                                <p id="replyMessageContent">fine nad what about you</p>
-                                            </div>
-                                            <div class="close-icon-section">
-                                                <i class="fas fa-times" id="closeReplyButton"></i>
-                                            </div>
-                                        </div>
-                                    </div>
+
                                     <div class="input-group mb-2 message-input-wrapper">
                                         <input type="text" class="form-control" id="messageInput"
                                                placeholder="Type your message" name="message">

@@ -4,9 +4,8 @@ from channels.generic.websocket import WebsocketConsumer
 from django.contrib.auth.models import User
 from django.db.models import Q
 from .models import Room, Message
-
-
-
+from django_redis import get_redis_connection
+from django.core.cache import cache
 
 
 class ChatConsumer(WebsocketConsumer):
@@ -18,11 +17,6 @@ class ChatConsumer(WebsocketConsumer):
         self.room = None
 
     def connect(self):
-
-        redis_instance.lpush('active_chat_users', "user 1")
-        redis_instance.lpush('active_chat_users', "user 2")
-        redis_instance.lpush('active_chat_users', "user 3")
-
         self.user = self.scope['user']
         self.friend_name = self.scope['url_route']['kwargs']['friendname']
         # getting receiver object
@@ -43,22 +37,18 @@ class ChatConsumer(WebsocketConsumer):
             self.room_group_name,
             self.channel_name
         )
-        # storing data on redis
-        # print("redis user exists : ", redis_instance.exists('active_chat_users'))
-        #
-        # redis_instance.lpush('active_chat_users', self.user.username)
-        self.accept()
 
-        while redis_instance.llen('active_chat_users') != 0:
-            print(redis_instance.lpop('active_chat_users'))
+        # adding the user in redis as active chat user
+        cache.set(self.user.username, "active_chat_user")
+        self.accept()
 
     def disconnect(self, close_code):
         async_to_sync(self.channel_layer.group_discard)(
             self.room_group_name,
             self.channel_name
         )
-        # removing the user from the active users on disconnect
-        redis_instance.lrem('active_chat_users', count=0, value=self.user.username)
+        # removing the user from active chat user
+        cache.delete(self.user.username)
 
     def receive(self, text_data):
         data = json.loads(text_data)
@@ -131,12 +121,15 @@ class ChatConsumer(WebsocketConsumer):
 
     def send_new_message(self, message):
         message_data = {
+            'message_type': "message_notification",
             'sender': message.sender.username,
             'receiver': message.receiver.username,
             'content': message.content,
             'deleted': message.deleted,
             'timestamp': str(message.timestamp)
         }
+
+        # sending message to room
         async_to_sync(self.channel_layer.group_send)(
             self.room_group_name,
             {
@@ -144,6 +137,17 @@ class ChatConsumer(WebsocketConsumer):
                 'messages': message_data
             }
         )
+
+        # checking if receiver is attached with the socket or not
+        if cache.__contains__(message.receiver.username):  # if attached
+            if cache.get(message.receiver.username) is not 'active_chat_user':
+                async_to_sync(self.channel_layer.group_send)(
+                    message.receiver.username,
+                    {
+                        'type': 'notify',
+                        'notification': message_data
+                    }
+                )
 
     def send_message(self, event):
         self.send(text_data=json.dumps(event['messages']))
@@ -154,6 +158,7 @@ class NotificationConsumer(WebsocketConsumer):
         super().__init__(*args, **kwargs)
         self.room_group_name = None
         self.user = None
+        self.redis_connection = get_redis_connection('default')
 
     def connect(self):
         self.user = self.scope["user"].username
@@ -162,9 +167,8 @@ class NotificationConsumer(WebsocketConsumer):
             self.room_group_name,
             self.channel_name
         )
-
-        redis_instance.lpush('active_users', self.user)
-
+        # adding the user in redis as active user
+        cache.set(self.user, "online")
         self.accept()
 
     def receive(self, text_data):
@@ -212,6 +216,9 @@ class NotificationConsumer(WebsocketConsumer):
             self.channel_name
         ))
 
+        # removing user from redis
+        cache.delete(self.user)
+
     def notify(self, event):
-        print(event)
+        print(event['notification'])
         self.send(text_data=json.dumps(event['notification']))

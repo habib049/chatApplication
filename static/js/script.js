@@ -9,6 +9,8 @@ window.addEventListener('load', (event) => {
     // getting first user and make connection on it
     let firstFriend = document.getElementsByClassName('contact-username')[0].innerHTML;
 
+    //opening the first user chat
+    getChat(firstFriend);
 
     // this socket is for notifications like someone else message you
     // or someone is online or not
@@ -21,6 +23,7 @@ window.addEventListener('load', (event) => {
     notificationSocket.onopen = (e) => {
         console.log("notification socket open")
     }
+
     notificationSocket.onmessage = (e) => {
         let data = JSON.parse(e.data);
         if (data.message_type === "typing") {
@@ -28,14 +31,52 @@ window.addEventListener('load', (event) => {
             userTyping(data.message, data.friend, data.user);
         } else if (data.message_type === "stop_typing") {
             stopTyping(data.message, data.friend, data.user);
+        } else if (data.message_type === "message_notification") {
+            notifyNewMessage(data.content, data.sender, data.timestamp)
         }
+
     }
+
     notificationSocket.onclose = (e) => {
         console.log("notification socket close")
     }
+    //
+    setTimeout(() => {
+        notifyNewMessage('this is new message for checking', 'raheel', "")
+    }, 2000)
 
+    function notifyNewMessage(message, sender, timestamp) {
+        let contactId = "conversion-" + sender;
+        let newMessageId = "information-" + sender;
 
-    //making websocket connection
+        let contact = document.getElementById(contactId);
+        let lastMessage = document.getElementById(newMessageId);
+        //getting last message time p tag
+        let lastMessageTime = contact.getElementsByClassName('last-message-time-p')[0]
+        // getting the contacts section to make the new message contact first child
+        let contactsSection = document.getElementsByClassName('contact-section')[0];
+
+        // setting data
+        lastMessage.innerText = message;
+        lastMessageTime.innerText = getLastMessageTime(timestamp);
+
+        // contact.style.backgroundColor = "#1d1d1d";
+        // lastMessage.style.color = "orange";
+        // lastMessageTime.style.color = "orange";
+
+        //making the contact first
+        contactsSection.removeChild(contact);
+        contactsSection.prepend(contact);
+        contact.classList.add("new-message-contact")
+    }
+
+    // function make last message time string
+    function getLastMessageTime(timestamp) {
+        let date = new Date(timestamp);
+        return date.getHours() + ":" + date.getMinutes();
+    }
+
+    //making websocket connection with chat socket
     let chatSocket = new ReconnectingWebSocket(
         'ws://' + window.location.host +
         '/ws/chat/' + firstFriend + '/'
@@ -44,6 +85,7 @@ window.addEventListener('load', (event) => {
     chatSocket.onopen = (e) => {
         console.log('connection open');
     };
+
     chatSocket.onmessage = (e) => {
         let data = JSON.parse(e.data)
 
@@ -56,16 +98,18 @@ window.addEventListener('load', (event) => {
             } else if (data.message_type === 'stop_typing') {
                 if (data.user !== user)
                     stopTyping(data.message, data.friend);
+            } else if (data.message_type === 'message_notification') {
+                loadNewMessage(data.content, data.timestamp, data.sender, data.receiver);
             }
         } else {
             loadNewMessage(data.content, data.timestamp, data.sender, data.receiver);
         }
 
     };
+
     chatSocket.onclose = (e) => {
         console.log('connection close');
     };
-
 
     function changeUrl(friendName) {
         chatSocket.url = 'ws://' + window.location.host +
@@ -73,15 +117,17 @@ window.addEventListener('load', (event) => {
         chatSocket.refresh();
     }
 
-
     let contacts = document.getElementsByClassName('contact');
     for (let i = 0; i < contacts.length; i++) {
-        contacts[i].addEventListener('click', getChat)
+        contacts[i].addEventListener('click', getChatWrapper)
     }
 
-    function getChat(e) {
-        e.preventDefault();
+    function getChatWrapper(e) {
         let friendName = this.id.toString().split('-')[1];
+        getChat(friendName);
+    }
+
+    function getChat(friendName) {
         if (friend !== friendName) {
             $.ajax({
                 beforeSend: function (xhr, settings) {
@@ -97,20 +143,27 @@ window.addEventListener('load', (event) => {
                 url: '/fectch-messages',
                 dataType: 'json',
                 success: function (data) {
+                    //changing color of contact
+                    // if there is nay new message it removes the styling of new message
+                    let contact = document.getElementById('conversion-' + friendName);
 
-                    console.log(data);
+                    if (contact.classList.contains('new-message-contact')) {
+                        contact.classList.remove('new-message-contact');
+                    }
 
-                    // hiding initial screen
-                    document.getElementsByClassName('initial-screen')[0].style.display = 'none';
-                    document.getElementsByClassName('chatting-wrapper')[0].style.display = 'block';
+
                     //loading Messages
                     loadMessages(data.messages, data.user, friendName);
-                    changeUrl(friendName);
+
+                    if (friendName !== firstFriend) //first friend is already connected
+                        changeUrl(friendName);
+
                     friend = friendName;
-                    addListenersToDeleteAndReplyButtons();
+                    addListenersToDeleteButtons();
                 }
             });
         }
+        return false; //to prevent the any kind of loading
     }
 
     function loadMessages(messages, user, friendName) {
@@ -128,8 +181,6 @@ window.addEventListener('load', (event) => {
             if (user.toString() === messages[i].sender) { //sender message
                 messageDiv.classList.add('outgoing-message');
                 messageDiv.id = "message" + messages[i].id;
-
-                console.log(messages[i].deleted)
                 if (messages[i].deleted) {
                     messageDiv.innerHTML = `<div class="sent-message-content message-content">
                                                 <p id="message-content-${messages[i].id}" class="sent-content" style="background-color:#49495a;">
@@ -139,12 +190,10 @@ window.addEventListener('load', (event) => {
                                          </div>`
 
                 } else {
-                    console.log("simple messages")
                     messageDiv.innerHTML = `<div class="sent-message-content message-content">
                                                 <p id="message-content-${messages[i].id}" class="sent-content">
                                                     ${messages[i].content}
-                                                    <span class="message-options">
-                                                       <i id="reply-message-${messages[i].id}" class="fas fa-reply message-reply"></i>
+                                                    <span class="message-options">                                                      
                                                         <i id="delete-message-${messages[i].id}" class="fas fa-trash-alt delete-message"></i>
                                                     </span> 
                                                     </p>
@@ -168,9 +217,7 @@ window.addEventListener('load', (event) => {
                                               <div class="received-message-content message-content">
                                                 <p id="message-content-${messages[i].id}" class="received-content">
                                                     ${messages[i].content}
-                                                     <span class="message-options">
-                                                       <i id="reply-message-${messages[i].id}" class="fas fa-reply message-reply"></i>
-                                                    </span>                                                    
+                                                                                                    
                                                 </p>
                                                 <span class="time-date">${messageDate}</span>                                                
                                               </div>`
@@ -187,57 +234,12 @@ window.addEventListener('load', (event) => {
         }
     }
 
-    function addListenersToDeleteAndReplyButtons() {
-        let messageReplies = document.getElementsByClassName('message-reply');
+    function addListenersToDeleteButtons() {
         let deleteMessage = document.getElementsByClassName('delete-message');
-        for (let i = 0; i < messageReplies.length; i++) {
-            messageReplies[i].addEventListener('click', replyMessageHandler);
+        for (let i = 0; i < deleteMessage.length; i++) {
             deleteMessage[i].addEventListener('click', deleteMessageHandler);
         }
     }
-
-
-    let replyMessageSection = document.getElementById('replyMessageSection');
-
-    function replyMessageHandler() {
-
-        replyMessageSection.classList.remove('sender-reply-message');
-        replyMessageSection.classList.remove('receiver-reply-message');
-
-        let splitId = this.id.toString().split('-');
-        let contentId = "message-content-" + splitId[2]
-        let replyMessage = document.getElementById(contentId);
-        document.getElementById('replyMessageContent').innerText = replyMessage.innerText;
-
-        if (replyMessage.classList.contains('sent-content')) {
-            replyMessageSection.classList.add('sender-reply-message')
-        } else {
-            replyMessageSection.classList.add('receiver-reply-message')
-        }
-        document.getElementById('replySectionWrapper').style.display = 'block';
-        chattingArea.style.height = '510px';
-        chattingArea.style.marginBottom = '52px';
-
-        if (chattingArea.scrollHeight > chattingArea.clientHeight) {
-            chattingArea.scrollTop = chattingArea.scrollHeight;
-        }
-
-
-    }
-
-    document.getElementById('closeReplyButton').addEventListener('click', (e) => {
-        document.getElementById('replySectionWrapper').style.display = 'none';
-        replyMessageSection.classList.remove('sender-reply-message');
-        replyMessageSection.classList.remove('receiver-reply-message');
-
-        chattingArea.style.height = '568px';
-        chattingArea.style.marginBottom = '0';
-
-        if (chattingArea.scrollHeight > chattingArea.clientHeight) {
-            chattingArea.scrollTop = chattingArea.scrollHeight;
-        }
-
-    })
 
     function deleteMessageHandler() {
         let messageId = this.id.toString().split('-')[2];
@@ -359,8 +361,8 @@ window.addEventListener('load', (event) => {
 
 
     function loadNewMessage(message, timestamp, sender, receiver) {
-
         if (user === sender) {
+            alert("this is user message")
             let outgoingMessageDiv = document.createElement('div');
             outgoingMessageDiv.classList.add('outgoing-message');
 
@@ -370,7 +372,8 @@ window.addEventListener('load', (event) => {
                                             </div>`
 
             chattingArea.append(outgoingMessageDiv);
-        } else if (friend === receiver) {
+        } else if (user === receiver) {
+            alert("this is friend message")
             let incomingMessageDiv = document.createElement('div');
             incomingMessageDiv.classList.add('incoming-message');
 
